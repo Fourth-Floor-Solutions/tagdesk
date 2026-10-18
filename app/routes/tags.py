@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 from .. import auth, codes, csvout, db, hudu, hudu_archive, labels, log, printer
 from ..tagops import (
@@ -256,6 +256,24 @@ def tag_detail(request: Request, code: str):
         label_problems=LABEL_PROBLEMS,
         qr_url=labels.qr_data(PUBLIC_BASE_URL, canon),
     )
+
+
+@router.get("/tags/{code}/preview.svg")
+def tag_preview(request: Request, code: str, format: str = "", client_id: str = ""):
+    """The tag's label drawn with another format and/or client, for the live preview. Saves nothing."""
+    auth.require_user(request)
+    with db.connection() as conn:
+        tag = db.get_tag(conn, codes.parse(code) or "")
+        if not tag:
+            return Response("Not found", status_code=404, media_type="text/plain")
+        draft = dict(tag)
+        if format in labels.FORMATS:
+            draft["format"] = format
+        if client_id.isdigit():
+            c = conn.execute("SELECT label_name FROM clients WHERE id = ?", (int(client_id),)).fetchone()
+            if c:
+                draft["client_label"] = c["label_name"]
+    return Response(svg_for(draft), media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
 
 
 @router.post("/tags/{code}")

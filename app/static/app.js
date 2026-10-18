@@ -134,6 +134,34 @@ function initPicker() {
 }
 document.addEventListener("DOMContentLoaded", initPicker);
 
+// Tag page: redraw the label preview when the format or client changes (before saving).
+function initLivePreview() {
+  var form = document.querySelector("form[data-preview]");
+  var box = document.getElementById("label-preview");
+  if (!form || !box) return;
+  var pending = 0;
+  function redraw() {
+    var fmt = form.querySelector("input[name=format]:checked");
+    var client = form.querySelector("select[name=client_id]");
+    var q = new URLSearchParams({ format: fmt ? fmt.value : "", client_id: client ? client.value : "" });
+    var mine = ++pending;
+    fetch(form.dataset.preview + "?" + q.toString(), { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (svg) {
+        if (!svg || mine !== pending) return;  // a newer choice is on its way
+        box.innerHTML = svg;
+        var warn = document.getElementById("fit-warn");
+        if (warn) warn.hidden = true;
+        fitLabels(box);
+      })
+      .catch(function () {});
+  }
+  form.addEventListener("change", function (e) {
+    if (e.target.name === "format" || e.target.name === "client_id") redraw();
+  });
+}
+document.addEventListener("DOMContentLoaded", initLivePreview);
+
 // Loan format only makes sense for our own kit: keep the client choice in step.
 function initFormatGuard() {
   var form = document.querySelector("form[data-format-guard]");
