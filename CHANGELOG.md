@@ -4,6 +4,11 @@ What changed in TagDesk, newest first. Everything that changed on the same
 day is listed under that one date, with any versions released that day in
 the heading. Versions follow [semantic versioning](https://semver.org).
 
+## 18 October 2026 · v0.13.1
+
+### Fixed
+- On a tag's page, the label preview now changes as soon as you pick another format or client, before saving ([#55](https://github.com/Fourth-Floor-Solutions/tagdesk/issues/55)).
+
 ## 16 October 2026 · v0.2.0, v0.3.0, v0.4.0, v0.5.0, v0.6.0, v0.7.0, v0.8.0, v0.9.0, v0.10.0, v0.11.0, v0.12.0, v0.13.0
 
 ### Added

@@ -28,7 +28,7 @@
   <form method="post" action="/tags/{{ tag.code }}/keep-retired" class="inline"><button class="quiet sm" type="submit">Keep retired</button></form></div>{% endif %}
 <div class="grid2">
   <div class="card">
-    <div class="preview">{{ svg|safe }}</div>
+    <div class="preview" id="label-preview" aria-live="polite">{{ svg|safe }}</div>
     <p class="flash warn" id="fit-warn" hidden>The client's label name is too long for this tape, so it's squeezed. An admin can set a shorter label name on the Clients page.</p>
     <dl class="meta">
       <dt>Status</dt><dd>{{ m.status_pill(tag.status, long=true) }}</dd>
@@ -51,7 +51,7 @@
   </div>
   <div class="card">
     <h2>{{ 'Assign this tag to a device' if tag.status == 'unassigned' else 'Device' }}</h2>
-    <form class="stack" method="post" action="/tags/{{ tag.code }}" data-format-guard>
+    <form class="stack" method="post" action="/tags/{{ tag.code }}" data-format-guard data-preview="/tags/{{ tag.code }}/preview.svg">
       <div class="field"><label for="client_id">Client</label>{% set sel_client = tag.client_id %}{% include "_client_select.html" %}
         <span class="hint">Changing the client means printing a new label. The code and history stay the same.</span></div>
       <div class="field"><span class="lbl">Label format</span>{% set sel_format = tag.format %}{% include "_formats.html" %}</div>

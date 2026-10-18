@@ -585,3 +585,24 @@ def test_status_wording_is_about_assignment():
     page = c.get("/").text
     assert "Not assigned" in page and "Assigned to a device" in page
     assert "On device" not in page and "Printed, not yet on a device" not in page
+
+
+def test_tag_preview_follows_format_and_client(conn):
+    from app import db
+
+    c = TestClient(app)
+    login(c)
+    conn.execute("INSERT INTO clients(name, label_name, active, updated_at) VALUES('Acme Ltd', 'Acme', 1, '')")
+    conn.execute("INSERT INTO clients(name, label_name, active, updated_at) VALUES('Brightside', 'Brightside', 1, '')")
+    a, b = [r[0] for r in conn.execute("SELECT id FROM clients ORDER BY id DESC LIMIT 2")][::-1]
+    code = db.issue_tags(conn, 1, a, "standard", "admin")[0]
+    page = c.get(f"/tags/{code}").text
+    assert f'data-preview="/tags/{code}/preview.svg"' in page and 'id="label-preview"' in page
+    r = c.get(f"/tags/{code}/preview.svg?format=slim&client_id={b}")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("image/svg+xml")
+    assert "fmt-slim" in r.text and "Brightside" in r.text
+    assert "fmt-standard" in c.get(f"/tags/{code}/preview.svg?format=nonsense").text  # unknown format: saved one
+    tag = db.get_tag(conn, code)
+    assert tag["format"] == "standard" and tag["client_id"] == a  # nothing saved
+    assert c.get("/tags/ZZZZZ/preview.svg").status_code == 404
+    assert TestClient(app).get(f"/tags/{code}/preview.svg", follow_redirects=False).status_code == 303
