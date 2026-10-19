@@ -2,6 +2,6 @@
 #   uv pip install -r requirements.txt -r requirements-dev.txt
 pytest==9.*
 pytest-cov==7.*
-ruff==0.14.*
+ruff==0.17.*
 mypy==1.18.*
 httpx2==2.*          # what starlette.testclient now expects
