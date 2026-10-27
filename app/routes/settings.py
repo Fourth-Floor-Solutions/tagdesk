@@ -68,7 +68,7 @@ def settings_test_sso(request: Request):
     try:
         r = httpx.get(auth.metadata_url(cfg[0]), timeout=10)
         ok = r.status_code == 200 and "authorization_endpoint" in r.json()
-    except (httpx.HTTPError, ValueError):
+    except httpx.HTTPError, ValueError:
         ok = False
     if ok:
         flash(

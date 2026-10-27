@@ -153,7 +153,7 @@ def ink_for(accent: str) -> str:
     """Black or white text, whichever reads better on the accent colour."""
     try:
         r, g, b = (int(accent[i : i + 2], 16) / 255 for i in (1, 3, 5))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return "#16181c"
 
     def lin(c: float) -> float:  # sRGB channel to linear light
