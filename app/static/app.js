@@ -202,13 +202,80 @@ function printDirect(codes, button, out, onPrinted) {
     .finally(function () { button.disabled = false; button.textContent = label; });
 }
 
+// Tag page: a format or client picked but not saved is saved before printing, so what's
+// shown is what prints (and the tag's record still matches the label on the device).
+function unsavedLabelChange(form) {
+  if (!form) return false;
+  var fmt = form.querySelector("input[name=format]:checked");
+  var client = form.querySelector("select[name=client_id]");
+  return (fmt && fmt.value !== form.dataset.savedFormat) || (client && client.value !== form.dataset.savedClient);
+}
+
+function saveFirst(form, out) {
+  return fetch(form.action, { method: "POST", body: new FormData(form), credentials: "same-origin", headers: { Accept: "application/json" } })
+    .then(function (r) { return r.json().catch(function () { return { ok: false, error: "Couldn't save the tag." }; }); })
+    .then(function (d) {
+      if (d.ok) return true;
+      if (out) { out.hidden = false; out.className = "flash bad"; out.textContent = "Not printed: " + (d.error || "couldn't save the change."); }
+      return false;
+    })
+    .catch(function () {
+      if (out) { out.hidden = false; out.className = "flash bad"; out.textContent = "Couldn't reach the server."; }
+      return false;
+    });
+}
+
+function initSaveFirstLabels() {
+  var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-save-first]"));
+  if (!buttons.length) return;
+  var form = document.getElementById(buttons[0].dataset.saveFirst);
+  if (!form) return;
+  buttons.forEach(function (b) { b.dataset.label = b.textContent; });
+  function relabel() {
+    var dirty = unsavedLabelChange(form);
+    buttons.forEach(function (b) {
+      b.textContent = dirty ? "Save and " + b.dataset.label.charAt(0).toLowerCase() + b.dataset.label.slice(1) : b.dataset.label;
+    });
+  }
+  form.addEventListener("change", relabel);
+  relabel();
+  // "Print page" links: save first, then open the print page.
+  buttons.filter(function (b) { return b.tagName === "A"; }).forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      if (!unsavedLabelChange(form)) return;
+      e.preventDefault();
+      saveFirst(form, document.getElementById("print-result")).then(function (ok) { if (ok) location.href = a.href; });
+    });
+  });
+}
+document.addEventListener("DOMContentLoaded", initSaveFirstLabels);
+
 function initPrintButtons() {
   document.querySelectorAll("[data-print-direct]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var out = document.getElementById(btn.dataset.out);
-      printDirect(btn.dataset.printDirect, btn, out, function () {
-        if (btn.dataset.reload) setTimeout(function () { location.reload(); }, 1800);
-      });
+      var go = function () {
+        printDirect(btn.dataset.printDirect, btn, out, function () {
+          if (btn.dataset.reload) setTimeout(function () { location.reload(); }, 1800);
+        });
+      };
+      var form = btn.dataset.saveFirst && document.getElementById(btn.dataset.saveFirst);
+      if (form && unsavedLabelChange(form)) {
+        btn.disabled = true;
+        saveFirst(form, out).then(function (ok) {
+          btn.disabled = false;
+          if (!ok) return;
+          // Saved: the page's saved values now match, then print the new format.
+          var fmt = form.querySelector("input[name=format]:checked");
+          var client = form.querySelector("select[name=client_id]");
+          if (fmt) form.dataset.savedFormat = fmt.value;
+          if (client) form.dataset.savedClient = client.value;
+          btn.textContent = btn.dataset.label || btn.textContent;
+          go();
+        });
+        return;
+      }
+      go();
     });
   });
 

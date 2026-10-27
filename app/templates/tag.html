@@ -9,10 +9,10 @@
   </div>
   <div class="actions">
     {% if printer_on %}
-    <button class="primary" type="button" data-print-direct="{{ tag.code }}" data-out="print-result" data-reload="1">{{ 'Print label again' if tag.printed_count else 'Print label' }}</button>
-    <a class="btn quiet" href="/print?codes={{ tag.code }}">Print page</a>
+    <button class="primary" type="button" data-print-direct="{{ tag.code }}" data-out="print-result" data-reload="1" data-save-first="tag-edit">{{ 'Print label again' if tag.printed_count else 'Print label' }}</button>
+    <a class="btn quiet" href="/print?codes={{ tag.code }}" data-save-first="tag-edit">Print page</a>
     {% else %}
-    <a class="btn primary" href="/print?codes={{ tag.code }}">{{ 'Print again' if tag.printed_count else 'Print' }}</a>
+    <a class="btn primary" href="/print?codes={{ tag.code }}" data-save-first="tag-edit">{{ 'Print again' if tag.printed_count else 'Print' }}</a>
     {% endif %}
     {% if hudu_on and tag.hudu_asset_url %}<a class="btn" href="{{ tag.hudu_asset_url }}" target="_blank" rel="noopener">Open in Hudu</a>{% endif %}
   </div>
@@ -51,7 +51,7 @@
   </div>
   <div class="card">
     <h2>{{ 'Assign this tag to a device' if tag.status == 'unassigned' else 'Device' }}</h2>
-    <form class="stack" method="post" action="/tags/{{ tag.code }}" data-format-guard data-preview="/tags/{{ tag.code }}/preview.svg">
+    <form class="stack" id="tag-edit" method="post" action="/tags/{{ tag.code }}" data-format-guard data-preview="/tags/{{ tag.code }}/preview.svg" data-saved-format="{{ tag.format }}" data-saved-client="{{ tag.client_id }}">
       <div class="field"><label for="client_id">Client</label>{% set sel_client = tag.client_id %}{% include "_client_select.html" %}
         <span class="hint">Changing the client means printing a new label. The code and history stay the same.</span></div>
       <div class="field"><span class="lbl">Label format</span>{% set sel_format = tag.format %}{% include "_formats.html" %}</div>

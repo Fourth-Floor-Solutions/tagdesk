@@ -290,12 +290,16 @@ def tag_update(
     hudu_asset_url: str = Form(""),
 ):
     user = auth.require_user(request)
+    # "Save and print" on the tag page saves with fetch and wants a yes/no answer, not a redirect.
+    wants_json = "application/json" in request.headers.get("accept", "")
     with db.connection() as conn:
         tag = db.get_tag(conn, code)
         if not tag:
-            return go("/")
+            return JSONResponse({"ok": False, "error": "No such tag."}, status_code=404) if wants_json else go("/")
         err = check_format(conn, client_id, format, current_format=tag["format"])
         if err:
+            if wants_json:
+                return JSONResponse({"ok": False, "error": err}, status_code=400)
             flash(request, err, "bad")
             return go(f"/tags/{code}")
         new = {
@@ -323,7 +327,7 @@ def tag_update(
                 else:
                     changes.append(f"{k.replace('_', ' ')}: {tag[k] or '—'} → {v or '—'}")
         if not changes:
-            return go(f"/tags/{code}")
+            return JSONResponse({"ok": True, "saved": False}) if wants_json else go(f"/tags/{code}")
         status = tag["status"]
         if status == "unassigned" and (new["serial"] or new["device_name"] or new["hudu_asset_id"]):
             status = "active"
@@ -349,6 +353,10 @@ def tag_update(
             hudu_archive.clear_review(conn, code)  # relinked or unlinked: the old asset no longer matters
         herr = hudu_sync(conn, code, auth.label(user))
         updated = db.get_tag(conn, code)
+    if wants_json:
+        if herr:
+            flash(request, f"Saved, but Hudu wasn't updated: {herr}", "warn")
+        return JSONResponse({"ok": True, "saved": True, "format": updated["format"]})
     if herr:
         flash(request, f"Saved, but Hudu wasn't updated: {herr}", "warn")
     elif needs_reprint(updated):
