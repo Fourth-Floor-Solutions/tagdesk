@@ -4,9 +4,10 @@ What changed in TagDesk, newest first. Everything that changed on the same
 day is listed under that one date, with any versions released that day in
 the heading. Versions follow [semantic versioning](https://semver.org).
 
-## 27 October 2026 · v0.13.2, v0.13.3, v0.14.0
+## 27 October 2026 · v0.13.2, v0.13.3, v0.14.0, v0.14.1
 
 ### Changed
+- Updated FastAPI to 0.162 and Authlib (Microsoft sign-in) to 1.9.1, and the development tools Ruff to 0.17 and mypy to 2.4.
 - Slim and Micro labels are only as long as they need to be: they end just after the code, or the client name when that's longer, instead of leaving blank tape at the end. A Slim label with a short client name is now about 30 mm instead of 38 mm, and Micro labels about 20 mm instead of 22 mm. Long names still use up to the full 38 mm before being squeezed. Standard and Loan labels are unchanged ([#66](https://github.com/Fourth-Floor-Solutions/tagdesk/issues/66)).
 
 ### Fixed

@@ -129,7 +129,7 @@ def secret_warning(user) -> str:
     raw = settings.get("entra_secret_expires")
     try:
         expires = date.fromisoformat(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return ""
     days = (expires - date.today()).days
     if days < 0:
