@@ -13,6 +13,8 @@ from ..tagops import (
     clients,
     hudu_needs_sync,
     hudu_sync,
+    label_name,
+    label_text,
     needs_reprint,
     reprint_queue,
     reprint_reasons,
@@ -254,6 +256,7 @@ def tag_detail(request: Request, code: str):
         hudu_field=hudu.tag_label(),
         reprint=needs_reprint(tag),
         label_problems=LABEL_PROBLEMS,
+        label_length=f"{labels.length(tag['format'], tag['code'], label_name(tag), text=label_text()):g}",
         qr_url=labels.qr_data(PUBLIC_BASE_URL, canon),
     )
 
