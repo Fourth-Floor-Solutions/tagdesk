@@ -53,7 +53,7 @@ Because both come from one layout, what's on screen is what gets printed.
 Formats (Standard 18 mm, Slim 12 mm, Micro 6 mm, Loan 18 mm red) live in
 `labels.FORMATS`. Admins can switch formats off and change the tape colour
 and description in Settings; sizes are fixed because each layout is drawn
-for its tape width. Those changes are applied to `FORMATS` in place, which
+for its tape width. Slim and Micro labels are trimmed to their content (`labels.length()`): they end a margin after the code or the client name, whichever reaches further, up to the format's full length, so short names don't leave blank tape. The SVG, the bitmap and the print page all use the same length. Those changes are applied to `FORMATS` in place, which
 assumes a single worker process (how the Docker image runs).
 
 ## Printing to a Brother PT-P950NW

@@ -65,6 +65,7 @@ def page(request: Request, name: str, status_code: int = 200, **ctx):
         hudu_on=hudu.configured(),
         printer_on=any_printer(),
         formats=labels.FORMATS,
+        trimmed_formats=labels.TRIMMED,
         enabled_formats=labels.enabled(),
         tape_fill=labels.fill,
         public_base=PUBLIC_BASE_URL,

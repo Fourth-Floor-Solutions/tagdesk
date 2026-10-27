@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import copy
+import math
 import os
 from html import escape
 from typing import Any
@@ -181,6 +182,43 @@ def layout(fmt: str, code: str, client_name: str, text: dict | None = None) -> l
     raise ValueError(f"unknown format {fmt}")
 
 
+# ---------- length ----------
+
+# Slim and Micro labels end just after their content: the code, or the client
+# name when it's longer, plus the same margin as on the left. FORMATS width is
+# the most they can be; a long name is squeezed (maxw) rather than lengthening
+# the label further. Standard and Loan labels keep their fixed length.
+TRIMMED = {"slim": 1.4, "micro": 0.9}  # end margin in mm, matching each layout's left margin
+
+
+def _text_extent(el: dict) -> float:
+    """How far right a text element reaches, in mm, as drawn (squeezed to maxw if needed)."""
+    font = _font(el["font"], max(1, round(el["size"] * DOTS_PER_MM)))
+    body = el["body"]
+    natural = sum(font.getlength(ch) for ch in body) / DOTS_PER_MM + el.get("spacing", 0) * max(len(body) - 1, 0)
+    if el.get("maxw"):
+        natural = min(natural, el["maxw"])
+    if el.get("anchor") == "middle":
+        return el["x"] + natural / 2
+    return el["x"] + natural
+
+
+def length(fmt: str, code: str, client_name: str, text: dict | None = None) -> float:
+    """The label's length along the tape in mm (the printed width)."""
+    full = FORMATS[fmt]["width"]
+    if fmt not in TRIMMED:
+        return full
+    reach = 0.0
+    for el in layout(fmt, code, client_name, text):
+        if el["kind"] == "qr":
+            reach = max(reach, el["x"] + el["size"])
+        elif el["kind"] == "rect":
+            reach = max(reach, el["x"] + el["w"])
+        else:
+            reach = max(reach, _text_extent(el))
+    return min(full, math.ceil((reach + TRIMMED[fmt]) * 10) / 10)
+
+
 # ---------- SVG ----------
 
 
@@ -200,7 +238,7 @@ def render(
     fmt: str, code: str, client_name: str, base_url: str, css_class: str = "label", text: dict | None = None
 ) -> str:
     spec = FORMATS[fmt]
-    w, h = spec["width"], spec["height"]
+    w, h = length(fmt, code, client_name, text), spec["height"]
     tape = fill(fmt)
     out = [f'<rect width="{w}" height="{h}" fill="{tape}"/>']
     for el in layout(fmt, code, client_name, text):
@@ -296,7 +334,7 @@ def raster(fmt: str, code: str, client_name: str, base_url: str, text: dict | No
     from PIL import Image, ImageDraw
 
     spec = FORMATS[fmt]
-    W = round(spec["width"] * DOTS_PER_MM)
+    W = round(length(fmt, code, client_name, text) * DOTS_PER_MM)
     H = round(spec["height"] * DOTS_PER_MM)
     canvas = Image.new("L", (W, H), 0)  # 0 = no ink, 255 = ink
     d = ImageDraw.Draw(canvas)

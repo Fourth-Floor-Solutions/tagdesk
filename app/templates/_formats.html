@@ -2,7 +2,7 @@
   {% for key, f in formats.items() if f.enabled or sel_format == key %}
   <label>
     <input type="radio" name="format" value="{{ key }}" {{ 'checked' if sel_format == key }}>
-    <b>{{ f.name }} · {{ f.width }}×{{ f.height }} mm</b>
+    <b>{{ f.name }} · {% if key in trimmed_formats %}up to {% endif %}{{ f.width }}×{{ f.height }} mm</b>
     <span>{{ f.use }}{% if not f.enabled %} · switched off{% endif %}</span>
     <i class="swatch" style="background: {{ tape_fill(key) }}" title="{{ f.tape }}"></i>
   </label>

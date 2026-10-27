@@ -153,9 +153,10 @@ def test_printer_encoding():
     from app import labels, printer
 
     img = labels.raster("slim", "7KQ3M", "Example", "https://asset.example")
-    assert img.size == (539, 170)
+    width = round(labels.length("slim", "7KQ3M", "Example") * labels.DOTS_PER_MM)
+    assert img.size == (width, 170) and width < 539  # shorter than the full 38 mm: short name
     lines = printer.raster_lines(img, 12)
-    assert len(lines) == 539 - 2 * printer.FEED_DOTS and all(len(line) == 70 for line in lines)
+    assert len(lines) == width - 2 * printer.FEED_DOTS and all(len(line) == 70 for line in lines)
     # nothing outside the 12 mm print area pins (213..362: after the 213-pin right margin)
     for line in lines:
         bits = int.from_bytes(line, "big")
@@ -632,3 +633,23 @@ def test_save_before_print_answers_in_json(conn):
         c.post(f"/tags/{code}", data={"client_id": cid, "format": "standard"}, follow_redirects=False).status_code
         == 303
     )
+
+
+def test_slim_and_micro_end_after_their_content():
+    from app import labels
+
+    short = labels.length("slim", "22QTC", "Acme")
+    longer = labels.length("slim", "22QTC", "Northwind Studio")
+    longest = labels.length("slim", "22QTC", "Stiff + Trevillion Architects and Partners")
+    assert 29 < short < longer < longest <= 38  # grows with the name, never past the full 38 mm
+    assert labels.length("micro", "22QTC", "Anything") < 22
+    assert labels.length("standard", "22QTC", "Acme") == 48  # Standard and Loan keep their length
+    assert labels.length("loan", "22QTC", "Acme") == 48
+    # The SVG preview and the printed bitmap use the same length, and nothing is cut off.
+    svg = labels.render("slim", "22QTC", "Acme", "https://a.example")
+    assert f'width="{short}mm"' in svg and f'viewBox="0 0 {short} 12"' in svg
+    D = labels.DOTS_PER_MM
+    for fmt, name in (("slim", "Acme"), ("slim", "Northwind Studio"), ("micro", "X")):
+        im = labels.raster(fmt, "WWWWW", name, "https://a.example")
+        ink_end = im.convert("L").point(lambda v: 255 - v).getbbox()[2]
+        assert im.width - ink_end >= round(0.9 * D)  # a margin after the last ink

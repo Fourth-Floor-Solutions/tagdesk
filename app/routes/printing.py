@@ -36,7 +36,15 @@ def print_sheet(request: Request, batch: str = "", cut: str = ""):
     with db.connection() as conn:
         tags = [t for t in (db.get_tag(conn, c) for c in wanted) if t]
     org = settings.get_all()
-    items = [{"tag": t, "svg": svg_for(t, org), "spec": labels.FORMATS[t["format"]]} for t in tags]
+    items = [
+        {
+            "tag": t,
+            "svg": svg_for(t, org),
+            "spec": labels.FORMATS[t["format"]],
+            "length": labels.length(t["format"], t["code"], label_name(t, org), text=label_text(org)),
+        }
+        for t in tags
+    ]
     used = sorted({t["format"] for t in tags})
     pstats = printers_live()
     plan, waiting = printer.route(tags, pstats)
