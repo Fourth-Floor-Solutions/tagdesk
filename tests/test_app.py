@@ -606,3 +606,29 @@ def test_tag_preview_follows_format_and_client(conn):
     assert tag["format"] == "standard" and tag["client_id"] == a  # nothing saved
     assert c.get("/tags/ZZZZZ/preview.svg").status_code == 404
     assert TestClient(app).get(f"/tags/{code}/preview.svg", follow_redirects=False).status_code == 303
+
+
+def test_save_before_print_answers_in_json(conn):
+    from app import db
+
+    c = TestClient(app)
+    login(c)
+    conn.execute("INSERT INTO clients(name, label_name, active, updated_at) VALUES('Acme Ltd', 'Acme', 1, '')")
+    cid = conn.execute("SELECT MAX(id) FROM clients").fetchone()[0]
+    code = db.issue_tags(conn, 1, cid, "standard", "admin")[0]
+    page = c.get(f"/tags/{code}").text
+    assert 'data-saved-format="standard"' in page and 'data-save-first="tag-edit"' in page
+    js = {"Accept": "application/json"}
+    r = c.post(f"/tags/{code}", data={"client_id": cid, "format": "slim"}, headers=js)
+    assert r.status_code == 200 and r.json() == {"ok": True, "saved": True, "format": "slim"}
+    assert db.get_tag(conn, code)["format"] == "slim"
+    r = c.post(f"/tags/{code}", data={"client_id": cid, "format": "slim"}, headers=js)
+    assert r.json() == {"ok": True, "saved": False}  # nothing changed
+    r = c.post(f"/tags/{code}", data={"client_id": cid, "format": "loan"}, headers=js)
+    assert r.status_code == 400 and "Loan" in r.json()["error"]  # loan only for your own kit
+    assert db.get_tag(conn, code)["format"] == "slim"
+    # The normal form post still redirects back to the tag.
+    assert (
+        c.post(f"/tags/{code}", data={"client_id": cid, "format": "standard"}, follow_redirects=False).status_code
+        == 303
+    )
