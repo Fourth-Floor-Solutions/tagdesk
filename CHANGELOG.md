@@ -4,6 +4,11 @@ What changed in TagDesk, newest first. Everything that changed on the same
 day is listed under that one date, with any versions released that day in
 the heading. Versions follow [semantic versioning](https://semver.org).
 
+## 27 October 2026 · v0.13.2
+
+### Security
+- Updated Pillow, the image library used to draw labels, from 12.3 to 13.0, fixing 42 published vulnerabilities, and certifi (trusted certificate authorities) to its latest release. Labels and print jobs are unchanged: checked byte for byte for every format.
+
 ## 18 October 2026 · v0.13.1
 
 ### Fixed
