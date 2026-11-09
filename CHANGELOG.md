@@ -4,6 +4,11 @@ What changed in TagDesk, newest first. Everything that changed on the same
 day is listed under that one date, with any versions released that day in
 the heading. Versions follow [semantic versioning](https://semver.org).
 
+## 9 November 2026 · v0.14.2
+
+### Security
+- Updated Authlib (Microsoft sign-in) to 1.9.5 and its JSON Web Token library joserfc to 1.8.0, fixing a published vulnerability in joserfc, and python-multipart (form uploads) to 0.0.33. Sign-in and forms work as before.
+
 ## 27 October 2026 · v0.13.2, v0.13.3, v0.14.0, v0.14.1
 
 ### Changed
