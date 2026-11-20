@@ -4,6 +4,11 @@ What changed in TagDesk, newest first. Everything that changed on the same
 day is listed under that one date, with any versions released that day in
 the heading. Versions follow [semantic versioning](https://semver.org).
 
+## 20 November 2026 · v0.14.3
+
+### Security
+- Updated opentelemetry-api, a tracing library FastAPI installs, from 1.45.1 to 1.45.2, fixing a published vulnerability (CVE-2026-126360: a crafted trace header could slow down request handling). TagDesk doesn't use tracing itself; nothing else changes.
+
 ## 9 November 2026 · v0.14.2
 
 ### Security
